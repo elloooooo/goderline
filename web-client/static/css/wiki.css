@@ -1,0 +1,101 @@
+﻿body {
+	font-family:"Microsoft YaHei", Tahoma, Geneva, sans-serif;
+	/*margin: 10px;*/
+	color: #06185c; 
+
+	/** To edit this background, follow this link:
+	http://svgeneration.com/generate/Eave-Light Tiles?size=75&fill=57c748&edge-size=2&edge=3b7d30&shadow=203d19&
+	 */
+	/*background-color: #57c748;background-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAlJyBoZWlnaHQ9JzEwMCUnPgoJPGRlZnM+CgkJPHBhdHRlcm4gaWQ9J3RpbGUnIHBhdHRlcm5Vbml0cz0ndXNlclNwYWNlT25Vc2UnIHdpZHRoPSc3NScgaGVpZ2h0PSc3NScgdmlld0JveD0nMCAwIDUwIDUwJz4KCQkJPGxpbmUgeDE9JzEnIHkxPScwJyB4Mj0nNTEnIHkyPSc1MCcgc3Ryb2tlPScjMjAzZDE5JyBzdHJva2Utd2lkdGg9JzInLz4KCQkJPGxpbmUgeDE9JzQ5JyB5MT0nMCcgeDI9Jy0xJyB5Mj0nNTAnIHN0cm9rZT0nIzIwM2QxOScgc3Ryb2tlLXdpZHRoPScyJy8+CgkJCTxsaW5lIHgxPSc1MCcgeTE9JzAnIHgyPScwJyB5Mj0nNTAnIHN0cm9rZT0nIzNiN2QzMCcgc3Ryb2tlLXdpZHRoPScyJy8+CgkJCTxsaW5lIHgxPScwJyB5MT0nMCcgeDI9JzUwJyB5Mj0nNTAnIHN0cm9rZT0nIzNiN2QzMCcgc3Ryb2tlLXdpZHRoPScyJy8+CgkJPC9wYXR0ZXJuPgoJCTxyYWRpYWxHcmFkaWVudCBpZD0nbCcgY3g9JzUwJScgY3k9JzIwMCUnIGZ5PScwJyByPScyMDElJz4KCQkJPHN0b3Agb2Zmc2V0PScwJScgc3R5bGU9J3N0b3AtY29sb3I6I2ZmZjsgc3RvcC1vcGFjaXR5Oi4xOycgLz4KCQkJPHN0b3Agb2Zmc2V0PScxMCUnIHN0eWxlPSdzdG9wLWNvbG9yOiMwMDA7IHN0b3Atb3BhY2l0eTowLjE7JyAvPgoJCQk8c3RvcCBvZmZzZXQ9JzMwJScgc3R5bGU9J3N0b3AtY29sb3I6IzAwMDsgc3RvcC1vcGFjaXR5OjAuMzsnIC8+CgkJCTxzdG9wIG9mZnNldD0nOTAlJyBzdHlsZT0nc3RvcC1jb2xvcjojMDAwOyBzdG9wLW9wYWNpdHk6MC41NTsnIC8+CgkJCTxzdG9wIG9mZnNldD0nMTAwJScgc3R5bGU9J3N0b3AtY29sb3I6IzAwMDsgc3RvcC1vcGFjaXR5Oi42JyAvPgoJCTwvcmFkaWFsR3JhZGllbnQ+Cgk8L2RlZnM+Cgk8cmVjdCBmaWxsPScjNTdjNzQ4JyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJy8+Cgk8cmVjdCBmaWxsPSd1cmwoI3RpbGUpJyB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJy8+Cgk8cmVjdCB3aWR0aD0nMTAwJScgaGVpZ2h0PScxMDAlJyBmaWxsPSd1cmwoI2wpJy8+Cjwvc3ZnPg==');*/
+	/*利用背景图片加载有点慢，所以换成svg图片了*/
+	/*background:
+	url(../img/background.png) no-repeat top center,
+	url(../img/background_2.png)no-repeat bottom center,#83ba3a;*/
+	min-height:600px;
+	background: #dddddd
+}
+h1, h2, h3, h4, h5, h6 {font-family: "Microsoft YaHei",Trebuchet MS, Helvetica, sans-serif; font-weight: bold; line-height:100%; margin-top: 1em; margin-bottom: 0.5em;}
+h1 {font-size: 2.6em; color: #000000;}
+h2 {font-size: 2.2em; color: #404040;}
+h3 {font-size: 1.8em; color: #707070;}
+h4 {font-size: 1.4em; color: #909090;}
+h5 {font-size: 1.3em; color: #989898;}
+h6 {font-size: 1.2em; color: #9c9c9c;}
+blockquote{font-size:1em}
+
+.content{
+	width:90%;
+	background: #ffffff;
+	border:1px solid #C0C0C0;
+	/*firefox*/
+	-moz-border-radius: 5px;
+	/*css3*/
+	border-radius: 5px;
+	/*webkit*/
+	-webkit-border-radius: 5px;
+
+
+	-webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	-moz-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+	box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);
+
+	margin:10px auto;
+	padding:45px
+ }
+ /*即便content内的内容都是浮动的，也可以讲背景容器撑开*/
+ .content:after {
+	 content: "."; 
+	 display: block;
+	 height: 0; 
+	 clear: both; 
+	 visibility: hidden;
+ }
+
+ /*利用伪类元素给图像ME增加说明文字*/
+ .well{
+	 height:300px;
+	 overflow: auto;
+}
+#users{
+	height:326px;
+}
+
+#userInfo{
+	float:left;
+	height:80px;
+	padding:15px 10px 10px
+}
+#userPic{
+	float:left;
+	height:80px;
+	padding:10px
+}
+
+#userPic img {
+	height:60px;
+	display: block;
+	max-width: 100%;
+ }
+ .msgDiv{
+	 min-height: 20px;
+	 padding: 5px;
+	 margin-bottom: 10px;
+ }
+ .userInfo{
+	 color: black
+ }
+ .msgInfo{
+	 min-height: 20px;
+	 padding: 5px;
+	 background-color: #ffffff;
+	 border: 1px solid #e3e3e3;
+	 border-radius: 4px;
+ }
+ .panel-content{
+	 padding:10px
+ }
+ .log-container{
+	 height:300px;
+	 overflow: auto;
+
+ }

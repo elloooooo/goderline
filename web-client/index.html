@@ -1,0 +1,407 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<link rel="Stylesheet" type="text/css" href="static/bootstrap-3.1.1/css/bootstrap.min.css">
+		<link rel="stylesheet" type="text/css" href="static/easyui-1.4.3/themes/gray/easyui.css"  />
+		<link rel="Stylesheet" type="text/css" href="static/css/wiki.css">
+
+		<script type="text/javascript" src="static/js/jquery-1.11.0.js"></script>
+
+		<script type="text/javascript" src="static/easyui-1.4.3/jquery.easyui.min.js"></script>
+
+		<script type="text/javascript" src="static/bootstrap-3.1.1/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="static/js/jquery.json.min.js"></script>
+		<script type="text/javascript" src="static/js/xdate.js"></script>
+
+		<link type="text/css" rel="stylesheet" href="static/css/font-awesome.css"/>
+
+		<title>GODER Chat</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	</head>
+	<body>
+		<div class="container">
+			<div class="content">
+				<div class="row">
+					<div class="col-md-9">
+						<h2>
+							Goder Line
+						</h2>
+					</div>
+					<div class="col-md-3">
+						<div id="userPic">
+							<img src="static/img/me.png" alt="ME" />
+						</div>
+						<div id="userInfo" style="display:inline-block">
+							<div id = "welcomeInfo">
+								Hello, Goders!<br>	
+							</div>
+							<div>
+								<a id="login" role="button" class="btn btn-default btn-xs"  href="#">Login</a>
+							</div>
+						</div>	
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-9">
+						<div class="panel panel-info">
+							<div class="panel-heading">
+								Chat Room
+							</div>
+							<div class="panel-body">
+								<div class="panel-content">
+									<div id="log" class="logContainer" ></div>
+									<div class="input-group">
+										<input id="msg" type="text" class="form-control" placeholder="Say something...">
+										<span class="input-group-btn">
+											<button id="send" class="btn btn-default" type="button">Send</button>
+										</span>
+									</div><!-- /input-group -->
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="panel panel-info">
+							<div class="panel-heading">Users</div>
+							<div class="panel-body">
+								<div class="panel-content">
+									<ul id="users" ></ul>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="loginModal" class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel">
+			<div class="modal-dialog modal-sm">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+						<h4 class="modal-title" id="exampleModalLabel">Login</h4>
+					</div>
+					<div class="modal-body">
+						<form>
+							<div class="form-group">
+								<label for="userName" class="control-label">User Name:</label>
+								<input type="text" class="form-control" id="userName">
+							</div>
+						</form>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-primary" onclick="saveNewName()" >Confirm</button>
+						<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script type="text/javascript" src="static/js/wiki.js"></script>
+		<script>
+			var random = (new Date().getTime()+"").substr(4,8);
+			var user = null;
+			var timestamp = new Date().getTime()+"";
+
+			var sock = null;
+			var curContext;
+			var curTopic;
+			var topicList;
+
+			$(function(){
+				$('#login').click(function(){
+					$('#loginModal').modal('show');
+				});
+				//绑定发送消息事件
+				$('#send').click(sendMsg);
+
+				$('#log').tabs({
+					border:false,
+					height: 300,
+					onSelect:function(title){
+						curContext = $('#log').tabs('getSelected');
+						//var node = $('#users').tree('getSelected')
+						curTopic = {};
+						curTopic.topicName = title;
+						curTopic.topicId= curContext[0].id;
+						var node = $('#users').tree('find',curContext[0].id);
+						if(node!=null){
+							curTopic.type = node.type;
+						}
+					},
+					onClose:function(title,index){
+						//如果type为1，就发送
+						if(curTopic.type==1){
+							quitTopic(title);
+						}
+					}
+				});
+
+				//首先增加一个世界频道
+				$('#log').tabs('add',{
+					id:-1,
+					title:"Universe"//,
+				});
+			});
+
+			function saveNewName(){
+				user = $('#userName').val();
+				//建立websocket链接并尝试设置用户名
+				createWebsocket();
+				//$('#myModal').modal('toggle');
+			}
+
+			function createWebsocket(){
+				var wsuri = "ws://localhost:7777/chat";
+				//var wsuri = "ws://172.31.14.137:7777/chat";
+				sock = new WebSocket(wsuri);
+				sock.onopen = function() {
+					$('#loginModal').modal('hide');
+					sendConId();
+					sendTopicListQuery();
+					console.log("connected to " + wsuri);
+				}
+
+				sock.onclose = function(e) {
+					alert("用户名存在，请重新输入");
+					console.log("connection closed (" + e.code + ")");
+				}
+				sock.onmessage = function(e) {
+					console.log("message received: " + e.data);
+					var command = $.evalJSON(e.data).Command;
+					var msg = $.evalJSON(e.data).Msg;
+					var sysTime = $.evalJSON(e.data).Time;
+
+					//如果是MSG，则写入对应的topic页
+					if(command == "MSG" ){
+						var type = $.evalJSON(e.data).Type;
+						var tabName = $.evalJSON(e.data).DstName;
+
+						console.log(tabName);
+
+						var user = {};
+						user.userName = $.evalJSON(e.data).SrcName;
+						user.userId = $.evalJSON(e.data).SrcId;
+ 
+						//$('#log').tabs('getSelected')[0].id
+						appendLog(tabName, type, user ,msg, sysTime);
+
+					//如果是TOPICLIST，则写入全局变量，用于刷新topicList
+					}else if(command == "LISTTOPICS"){
+						topicList = $.evalJSON(msg);
+						buildUserTree();
+					}else if(command == "CONNECT"){ 
+						updateUserInfo("login");
+					}
+				}
+			}
+
+			function updateUserInfo(action){
+				if(action=="login"){
+					$('#welcomeInfo').html("Hello, "+user);
+					$('#login').remove();
+					//var logoutBtn = $("<a id='logout' role='button'>").addClass("btn btn-default btn-xs").html("Logout");
+					//logoutBtn.on('click', logout).appendTo('#userInfo');
+				}else if(action=="logout"){
+					$('#welcomeInfo').html("Hello, Goders");
+					$('#logout').remove();
+					var loginBtn = $("<a id='login' role='button'>").addClass("btn btn-default btn-xs").html("Login");
+						loginBtn.on('click',login).appendTo('#userInfo');
+					}
+				}
+
+				function login(){
+					$("#loginModal").modal('show');
+				}
+
+				//根据topicname退出频道
+				function quitTopic(title){
+					var msg = {};
+					msg.sessionId = timestamp;
+					msg.command = "QUITTOPIC";
+
+					msg.srcId = parseInt(random);
+					msg.srcName = user;
+
+					//msg.dstId = topic.id;
+					msg.dstName = title;
+
+					var msgJsonStr = $.toJSON(msg);
+					sock.send(msgJsonStr);	
+				}
+
+				function buildUserTree(){
+					$('#users').tree({
+						data:topicList,
+						onDblClick: enterTopic
+					});
+				}
+
+				//haha!!
+				function sendMsg(){
+					if(sock==null){
+						alert("Please login first~");
+						return;
+					}
+					var msg = $('#msg').val();
+					var msgObj = {};
+					//如果是世界频道，那么一定是广播消息
+					if(curContext[0].id==-1){
+						msgObj.Type = 1; 
+					}else{
+					//否则按照节点类型确定是消息类型
+						var node = $('#users').tree('find',curContext[0].id);
+						if(node==null){
+							alert("The user is offline!");
+						}else{
+							msgObj.Type = node.type; 
+						}
+					}
+
+					msgObj.sessionId = timestamp;
+					msgObj.command = "MSG";
+
+					msgObj.srcId = parseInt(random);
+					msgObj.srcName = user;
+
+					msgObj.dstId = parseInt(curTopic.topicId);
+					msgObj.dstName = curTopic.topicName;
+					
+					msgObj.msg = msg;
+
+					var msgJsonStr = $.toJSON(msgObj);
+
+					console.log(user);
+					appendLogToCurTab(user,msg);
+					sock.send(msgJsonStr);
+					$('#msg').val("");
+				}
+
+				function appendLogToCurTab(user,msg){
+					var log = $('#log');
+					var d = log[0]
+					var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+					//将Msg与User拼接后输出到log
+					var sysTime =  new XDate(new Date()).toString('yyyy-MM-dd HH:mm:ss');
+					var msgDetail = msgFormat("You",msg,sysTime);
+					curContext.append(msgDetail);
+					if (doScroll) {
+						d.scrollTop = d.scrollHeight - d.clientHeight;
+					}
+				}
+
+				function appendLog(tabName, tabType, user, msg, sysTime) {
+					var log = $('#log');
+					var d = log[0]
+					var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+
+					//将Msg与User拼接后输出到log
+					var msgDetail = msgFormat(user.userName, msg, sysTime);
+
+					if(tabType==1){
+						if(!$('#log').tabs('exists',tabName)){
+							console.log("Not found Tab to write");
+							return;
+						}
+						var topicTab = $('#log').tabs('getTab',tabName);
+						topicTab.append(msgDetail);
+					}else{
+						if(!$('#log').tabs('exists',user.userName)){
+							$('#log').tabs('add',{
+								id:user.userId,
+								title:user.userName,
+								closable:true,
+							});
+						}
+						
+						var userTab = $('#log').tabs('getTab',user.userName);
+						userTab.append(msgDetail);
+					}
+
+					if (doScroll) {
+						d.scrollTop = d.scrollHeight - d.clientHeight;
+					}
+				}
+
+
+				function sendConId(){
+					var msg = {};
+					msg.sessionId = timestamp;
+					msg.command = "CONNECT";
+					msg.srcId = parseInt(random);
+					msg.srcName = user;
+					var msgJsonStr = $.toJSON(msg);
+					sock.send(msgJsonStr);
+				}
+
+				function sendTopicListQuery(){
+					var msg = {}
+					msg.sessionId = timestamp;
+					msg.command = "LISTTOPICS";
+					var msgJsonStr = $.toJSON(msg);
+					sock.send(msgJsonStr);
+				};
+
+				function enterTopic(node){
+					if(node.id ==-1){
+						return;
+					}
+					var topic = {};
+					topic.id = node.id;
+					topic.title = node.text;
+
+					console.log(node.type);
+					if($('#log').tabs('exists',node.text)){
+						$('#log').tabs('select',node.text);
+						}else{
+						$('#log').tabs('add',{
+							id:topic.id,
+							title:topic.title,
+							closable:true,
+						});
+					}
+
+					//1.topic
+					//2.user
+					if(node.type==2){
+						return;
+						}else if(node.type==1){
+						sendAddGroupQuery(topic);
+					}
+				}
+
+				function sendAddGroupQuery(topic){
+					var msg = {};
+					msg.sessionId = timestamp;
+					msg.command = "JOINTOPIC";
+
+					msg.srcId = parseInt(random);
+					msg.srcName = user;
+
+					msg.dstId = topic.id;
+					msg.dstName = topic.title;
+
+					var msgJsonStr = $.toJSON(msg);
+					sock.send(msgJsonStr);	
+				}
+
+				function msgFormat(userName,msg,sysTime){
+					var user = $("<div class='userInfo'>").append(sysTime+" ").append(userName+":");
+					var msg = $("<div class='msgInfo'>").append(msg);
+					return $("<div class='msgDiv'>").append(user).append(msg);
+					}
+					//		function logout(){
+						//			var msg = {};
+						//			msg.sessionId = timestamp;
+						//			msg.command = "CLOSE";
+						//			msg.srcId = parseInt(random);
+						//			msg.srcName = user;
+						//			var msgJsonStr = $.toJSON(msg);
+						//			sock.send(msgJsonStr);
+
+						//			alert("hah");
+						//		}
+
+				</script>
+			</body>
+		</html>
